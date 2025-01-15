@@ -1,7 +1,11 @@
 using Api.Modules.Contacts.Dto;
 using Application.Services.ContactsService;
 using Application.Services.ContactsService.Dto;
+using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions.ValueTasks;
+using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
+using IResult = Microsoft.AspNetCore.Http.IResult;
 
 namespace Api.Modules.Contacts;
 
@@ -12,10 +16,21 @@ public static class ContactsModule
 		var group = app
 			.MapGroup("/contacts");
 
-		group.MapGet("/", GetContacts);
-		group.MapPost("/", CreateContact);
-		group.MapPut("/{id:guid}", UpdateContact);
-		group.MapDelete("/{id:guid}", DeleteContact);
+		group.MapGet("/", GetContacts)
+			.Produces<List<Contact>>()
+			.Produces<string>(StatusCodes.Status400BadRequest);
+
+		group.MapPost("/", CreateContact)
+			.Produces<Contact>(StatusCodes.Status201Created)
+			.Produces<string>(StatusCodes.Status400BadRequest);
+
+		group.MapPut("/{id:guid}", UpdateContact)
+			.Produces(StatusCodes.Status204NoContent)
+			.Produces<string>(StatusCodes.Status400BadRequest);
+
+		group.MapDelete("/{id:guid}", DeleteContact)
+			.Produces<Contact>()
+			.Produces<string>(StatusCodes.Status400BadRequest);
 
 		return app;
 	}
@@ -28,24 +43,20 @@ public static class ContactsModule
 
 	private static async Task<IResult> CreateContact([FromBody] CreateContactBody body, [FromServices] IContactService contactService)
 	{
-		var contact = await contactService.CreateAsync(body);
-		return contact == null
-			? Results.BadRequest("Something went wrong")
-			: Results.Created($"/contacts/{contact.Id}", contact);
+		var res = await contactService.CreateAsync(body);
+		return res.Match(s => Results.Created($"/contacts/{s.Id}", s), Results.BadRequest);
 	}
 
 	private static async Task<IResult> UpdateContact([FromRoute] Guid id, [FromBody] UpdateContactRequest request,
 		[FromServices] IContactService contactService)
 	{
-		await contactService.UpdateAsync(new UpdateContactBody(id, request.Email, request.FullName));
-		return Results.NoContent();
+		var res = await contactService.UpdateAsync(new UpdateContactBody(id, request.Email, request.FullName));
+		return res.Match(Results.NoContent, Results.BadRequest);
 	}
 
 	private static async Task<IResult> DeleteContact([FromRoute] Guid id, [FromServices] IContactService contactService)
 	{
-		var contact = await contactService.DeleteAsync(id);
-		return contact == null
-			? Results.BadRequest("Something went wrong")
-			: Results.Ok(contact);
+		var res = await contactService.DeleteAsync(id);
+		return res.Match(Results.Ok, Results.BadRequest);
 	}
 }

@@ -8,6 +8,7 @@ public class Contact : IAuditable
 	{
 		this.Email = email;
 		this.FullName = fullName;
+		this.Counterpart = counterpart;
 	}
 
 	private Contact()
