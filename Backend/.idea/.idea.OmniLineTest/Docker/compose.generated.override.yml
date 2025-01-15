@@ -1,0 +1,21 @@
+# This is a generated file. Not intended for manual editing.
+services:
+  api:
+    build:
+      context: "/home/simofono/Development/C#/OmniLineTest"
+      dockerfile: "Backend/Api/Dockerfile"
+      target: "base"
+    command: []
+    entrypoint:
+    - "dotnet"
+    - "/app/bin/Debug/net8.0/Api.dll"
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      DOTNET_USE_POLLING_FILE_WATCHER: "true"
+    image: "api:dev"
+    ports: []
+    volumes:
+    - "/home/simofono/Development/C#/OmniLineTest/Backend/Api:/app:rw"
+    - "/home/simofono/Development/C#/OmniLineTest:/src:rw"
+    - "/home/simofono/.nuget/packages:/home/app/.nuget/packages"
+    working_dir: "/app"
